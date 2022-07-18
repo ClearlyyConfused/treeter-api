@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var User = require('../models/users');
 var bcrypt = require('bcrypt');
+var jwt = require('jsonwebtoken');
 
 router.post('/register', function (req, res, next) {
 	bcrypt.hash(req.body.password, 10, function (err, hashedPassword) {
@@ -31,7 +32,8 @@ router.post('/login', function (req, res, next) {
 					return next(err);
 				}
 				if (result) {
-					res.json({ userInfo: userInfo });
+					var token = jwt.sign({ userId: userInfo.id }, 'jwtSecret');
+					res.json({ userInfo: userInfo, token });
 				} else {
 					res.json({ error: 'Incorrect password' });
 				}
