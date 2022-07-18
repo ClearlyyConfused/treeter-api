@@ -1,3 +1,4 @@
+require('dotenv').config();
 var express = require('express');
 var router = express.Router();
 var User = require('../models/users');
@@ -6,11 +7,13 @@ var jwt = require('jsonwebtoken');
 
 router.post('/register', function (req, res, next) {
 	bcrypt.hash(req.body.password, 10, function (err, hashedPassword) {
+		if (err) {
+			return next(err);
+		}
 		var newUser = new User({
 			username: req.body.username,
 			password: hashedPassword,
 		});
-
 		newUser.save(function (err) {
 			if (err) {
 				return next(err);
@@ -25,14 +28,14 @@ router.post('/login', function (req, res, next) {
 			return next(err);
 		}
 		if (userInfo === null) {
-			res.json({ error: 'User not found' });
+			res.json({ error: 'Username not found' });
 		} else {
 			bcrypt.compare(req.body.password, userInfo.password, function (err, result) {
 				if (err) {
 					return next(err);
 				}
 				if (result) {
-					var token = jwt.sign({ userId: userInfo.id }, 'jwtSecret');
+					var token = jwt.sign({ userId: userInfo.id }, process.env.JWTSECRET);
 					res.json({ token });
 				} else {
 					res.json({ error: 'Incorrect password' });
