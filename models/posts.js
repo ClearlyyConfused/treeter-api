@@ -5,7 +5,7 @@ var User = require('./users');
 var PostSchema = new Schema({
 	author: { type: String, required: true },
 	content: { type: String, required: true },
-	timestamp: { type: Date, required: true },
+	timestamp: { type: String, required: true },
 	comments: { type: Array, required: true },
 	likes: { type: Array, required: true },
 });

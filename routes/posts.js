@@ -35,10 +35,18 @@ router.post('/posts', verifyJWT, function (req, res, next) {
 		if (err) {
 			return next(err);
 		}
+
+		const timestamp = new Date();
 		var newPost = new Post({
 			author: user.username,
 			content: req.body.content,
-			timestamp: new Date(),
+			timestamp: timestamp.toLocaleDateString('en-US', {
+				day: 'numeric',
+				month: 'numeric',
+				year: 'numeric',
+				hour: 'numeric',
+				minute: 'numeric',
+			}),
 			comments: [],
 			likes: [],
 		});
