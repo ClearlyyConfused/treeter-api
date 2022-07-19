@@ -70,6 +70,8 @@ router.post('/posts/:postId/like', verifyJWT, function (req, res, next) {
 			Post.findByIdAndUpdate(req.params.postId, updatedPost, {}, function (err) {
 				if (err) {
 					return next(err);
+				} else {
+					res.json({ success: true });
 				}
 			});
 		} else {
@@ -78,6 +80,8 @@ router.post('/posts/:postId/like', verifyJWT, function (req, res, next) {
 			Post.findByIdAndUpdate(req.params.postId, updatedPost, {}, function (err) {
 				if (err) {
 					return next(err);
+				} else {
+					res.json({ success: true });
 				}
 			});
 		}
