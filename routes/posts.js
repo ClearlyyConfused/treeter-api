@@ -38,12 +38,47 @@ router.post('/posts', verifyJWT, function (req, res, next) {
 		var newPost = new Post({
 			author: user.username,
 			content: req.body.content,
+			timestamp: new Date(),
+			comments: [],
+			likes: [],
 		});
 		newPost.save(function (err) {
 			if (err) {
 				return next(err);
 			}
 		});
+	});
+});
+
+router.get('/posts/:postId/like', verifyJWT, function (req, res, next) {
+	Post.findById(req.params.postId).exec(function (err, post) {
+		res.json(post.likes);
+	});
+});
+
+router.post('/posts/:postId/like', verifyJWT, function (req, res, next) {
+	Post.findById(req.params.postId).exec(function (err, post) {
+		if (err) {
+			return next(err);
+		}
+		if (post.likes.includes(req.decoded.username)) {
+			var index = post.likes.indexOf(req.decoded.username);
+			var updatedPost = post;
+			updatedPost.likes.splice(index, 1);
+			Post.findByIdAndUpdate(req.params.postId, updatedPost, {}, function (err) {
+				if (err) {
+					return next(err);
+				}
+			});
+		} else {
+			var updatedPost = post;
+			updatedPost.likes.push(req.decoded.username);
+			Post.findByIdAndUpdate(req.params.postId, updatedPost, {}, function (err) {
+				if (err) {
+					return next(err);
+				}
+			});
+		}
 	});
 });
 

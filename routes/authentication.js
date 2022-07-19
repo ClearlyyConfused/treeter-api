@@ -35,7 +35,10 @@ router.post('/login', function (req, res, next) {
 					return next(err);
 				}
 				if (result) {
-					var token = jwt.sign({ userId: userInfo.id }, process.env.JWTSECRET);
+					var token = jwt.sign(
+						{ userId: userInfo._id, username: userInfo.username },
+						process.env.JWTSECRET
+					);
 					res.json({ token });
 				} else {
 					res.json({ error: 'Incorrect password' });
