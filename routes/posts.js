@@ -35,8 +35,6 @@ router.post('/posts', verifyJWT, function (req, res, next) {
 		if (err) {
 			return next(err);
 		}
-
-		const timestamp = new Date();
 		var newPost = new Post({
 			author: user.username,
 			content: req.body.content,
@@ -47,6 +45,8 @@ router.post('/posts', verifyJWT, function (req, res, next) {
 		newPost.save(function (err) {
 			if (err) {
 				return next(err);
+			} else {
+				res.json({ success: true });
 			}
 		});
 	});
