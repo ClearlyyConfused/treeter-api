@@ -98,6 +98,7 @@ router.post('/posts/:postId/comment', verifyJWT, function (req, res, next) {
 		var newComment = {
 			author: req.decoded.username,
 			content: req.body.content,
+			timestamp: req.body.timestamp,
 		};
 		newPost.comments.push(newComment);
 		Post.findByIdAndUpdate(req.params.postId, newPost, {}, function (err) {
