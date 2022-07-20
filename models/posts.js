@@ -1,6 +1,5 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
-var User = require('./users');
 
 var PostSchema = new Schema({
 	author: { type: String, required: true },

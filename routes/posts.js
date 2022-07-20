@@ -3,6 +3,7 @@ var express = require('express');
 var router = express.Router();
 var User = require('../models/users');
 var Post = require('../models/posts');
+var Comment = require('../models/comments');
 var jwt = require('jsonwebtoken');
 
 var verifyJWT = function (req, res, next) {
@@ -20,6 +21,8 @@ var verifyJWT = function (req, res, next) {
 		});
 	}
 };
+
+// Get/Post posts
 
 router.get('/posts', verifyJWT, function (req, res, next) {
 	Post.find().exec(function (err, posts) {
@@ -51,6 +54,8 @@ router.post('/posts', verifyJWT, function (req, res, next) {
 		});
 	});
 });
+
+// Get/Post Likes
 
 router.get('/posts/:postId/like', verifyJWT, function (req, res, next) {
 	Post.findById(req.params.postId).exec(function (err, post) {
@@ -85,6 +90,37 @@ router.post('/posts/:postId/like', verifyJWT, function (req, res, next) {
 				}
 			});
 		}
+	});
+});
+
+// Get/Post Comments
+router.get('/posts/:postId/comment', verifyJWT, function (req, res, next) {
+	Post.findById(req.params.postId).exec(function (err, post) {
+		if (err) {
+			return next(err);
+		}
+		res.json(post.comments);
+	});
+});
+
+router.post('/posts/:postId/comment', verifyJWT, function (req, res, next) {
+	Post.findById(req.params.postId).exec(function (err, post) {
+		if (err) {
+			return next(err);
+		}
+		var newPost = post;
+		var newComment = {
+			author: req.decoded.username,
+			content: req.body.content,
+		};
+		newPost.comments.push(newComment);
+		Post.findByIdAndUpdate(req.params.postId, newPost, {}, function (err) {
+			if (err) {
+				return next(err);
+			} else {
+				res.json({ success: true });
+			}
+		});
 	});
 });
 
