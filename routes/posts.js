@@ -3,7 +3,6 @@ var express = require('express');
 var router = express.Router();
 var User = require('../models/users');
 var Post = require('../models/posts');
-var Comment = require('../models/comments');
 var jwt = require('jsonwebtoken');
 
 var verifyJWT = function (req, res, next) {
