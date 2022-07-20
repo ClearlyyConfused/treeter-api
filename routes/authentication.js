@@ -39,7 +39,7 @@ router.post('/login', function (req, res, next) {
 						{ userId: userInfo._id, username: userInfo.username },
 						process.env.JWTSECRET
 					);
-					res.json({ token, userId: userInfo._id });
+					res.json({ token, username: userInfo.username });
 				} else {
 					res.json({ error: 'Incorrect password' });
 				}
