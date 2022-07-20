@@ -55,13 +55,7 @@ router.post('/posts', verifyJWT, function (req, res, next) {
 	});
 });
 
-// Get/Post Likes
-
-router.get('/posts/:postId/like', verifyJWT, function (req, res, next) {
-	Post.findById(req.params.postId).exec(function (err, post) {
-		res.json(post.likes);
-	});
-});
+// Post Likes
 
 router.post('/posts/:postId/like', verifyJWT, function (req, res, next) {
 	Post.findById(req.params.postId).exec(function (err, post) {
@@ -93,15 +87,7 @@ router.post('/posts/:postId/like', verifyJWT, function (req, res, next) {
 	});
 });
 
-// Get/Post Comments
-router.get('/posts/:postId/comment', verifyJWT, function (req, res, next) {
-	Post.findById(req.params.postId).exec(function (err, post) {
-		if (err) {
-			return next(err);
-		}
-		res.json(post.comments);
-	});
-});
+// Post Comments
 
 router.post('/posts/:postId/comment', verifyJWT, function (req, res, next) {
 	Post.findById(req.params.postId).exec(function (err, post) {
@@ -121,6 +107,16 @@ router.post('/posts/:postId/comment', verifyJWT, function (req, res, next) {
 				res.json({ success: true });
 			}
 		});
+	});
+});
+
+// Get Specific Post Info
+router.get('/posts/:postId', verifyJWT, function (req, res, next) {
+	Post.findById(req.params.postId).exec(function (err, post) {
+		if (err) {
+			return next(err);
+		}
+		res.json(post);
 	});
 });
 
