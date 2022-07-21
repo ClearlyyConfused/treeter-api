@@ -22,7 +22,6 @@ var verifyJWT = function (req, res, next) {
 };
 
 // Get/Post posts
-
 router.get('/posts', verifyJWT, function (req, res, next) {
 	Post.find().exec(function (err, posts) {
 		if (err) {
@@ -54,8 +53,23 @@ router.post('/posts', verifyJWT, function (req, res, next) {
 	});
 });
 
-// Post Likes
+// Delete posts
+router.post('/posts/:postId/delete', verifyJWT, function (req, res, next) {
+	Post.findById(req.params.postId).exec(function (err, post) {
+		if (post.author === req.decoded.username) {
+			Post.findByIdAndDelete(req.params.postId, function (err) {
+				if (err) {
+					return next(err);
+				}
+			});
+			res.json({ success: true });
+		} else {
+			res.json({ error: "Cannot delete other people's posts" });
+		}
+	});
+});
 
+// Post Likes
 router.post('/posts/:postId/like', verifyJWT, function (req, res, next) {
 	Post.findById(req.params.postId).exec(function (err, post) {
 		if (err) {
@@ -87,7 +101,6 @@ router.post('/posts/:postId/like', verifyJWT, function (req, res, next) {
 });
 
 // Post Comments
-
 router.post('/posts/:postId/comment', verifyJWT, function (req, res, next) {
 	Post.findById(req.params.postId).exec(function (err, post) {
 		if (err) {
@@ -107,6 +120,32 @@ router.post('/posts/:postId/comment', verifyJWT, function (req, res, next) {
 				res.json({ success: true });
 			}
 		});
+	});
+});
+
+// Delete Comments
+router.post('/posts/:postId/comment/delete', verifyJWT, function (req, res, next) {
+	Post.findById(req.params.postId).exec(function (err, post) {
+		if (post.author === req.decoded.username) {
+			if (err) {
+				return next(err);
+			}
+			var newPost = post;
+			function getComment(comment) {
+				return comment == req.body.comment;
+			}
+			var index = newPost.comments.findIndex(getComment);
+			newPost.comments.splice(index, 1);
+			Post.findByIdAndUpdate(req.params.postId, newPost, {}, function (err) {
+				if (err) {
+					return next(err);
+				} else {
+					res.json({ success: true });
+				}
+			});
+		} else {
+			res.json({ error: "Cannot delete other people's comments" });
+		}
 	});
 });
 
