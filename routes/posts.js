@@ -125,7 +125,37 @@ router.post('/posts/:postId/comment', verifyJWT, function (req, res, next) {
 
 // Delete Comments
 router.post('/posts/:postId/comment/delete', verifyJWT, function (req, res, next) {
-	res.send('ok');
+	Post.findById(req.params.postId).exec(function (err, post) {
+		if (err) {
+			return next(err);
+		}
+		var newPost = post;
+		function getComment(comment) {
+			if (
+				comment.author === req.body.comment.author &&
+				comment.content === req.body.comment.content &&
+				comment.timestamp === req.body.comment.timestamp
+			) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+		var index = newPost.comments.findIndex(getComment);
+
+		if (newPost.comments[index].author === req.decoded.username) {
+			newPost.comments.splice(index, 1);
+			Post.findByIdAndUpdate(req.params.postId, newPost, {}, function (err) {
+				if (err) {
+					return next(err);
+				} else {
+					res.json({ success: true });
+				}
+			});
+		} else {
+			res.json({ error: "Cannot delete other people's comments" });
+		}
+	});
 });
 
 // Get Specific Post Info
