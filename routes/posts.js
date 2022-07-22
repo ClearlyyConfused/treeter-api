@@ -53,6 +53,32 @@ router.post('/posts', verifyJWT, function (req, res, next) {
 	});
 });
 
+// Update posts
+router.post('/posts/:postId/update', verifyJWT, function (req, res, next) {
+	Post.findById(req.params.postId).exec(function (err, post) {
+		if (post.author === req.decoded.username) {
+			var updatedPost = new Post({
+				_id: post._id,
+				author: post.author,
+				content: req.body.content,
+				timestamp: req.body.timestamp,
+				comments: post.comments,
+				likes: post.likes,
+				updated: true,
+			});
+			Post.findByIdAndUpdate(req.params.postId, updatedPost, {}, function (err) {
+				if (err) {
+					return next(err);
+				} else {
+					res.json({ success: true });
+				}
+			});
+		} else {
+			res.json({ error: "Cannot update other people's posts" });
+		}
+	});
+});
+
 // Delete posts
 router.post('/posts/:postId/delete', verifyJWT, function (req, res, next) {
 	Post.findById(req.params.postId).exec(function (err, post) {
@@ -60,9 +86,10 @@ router.post('/posts/:postId/delete', verifyJWT, function (req, res, next) {
 			Post.findByIdAndDelete(req.params.postId, function (err) {
 				if (err) {
 					return next(err);
+				} else {
+					res.json({ success: true });
 				}
 			});
-			res.json({ success: true });
 		} else {
 			res.json({ error: "Cannot delete other people's posts" });
 		}
@@ -123,6 +150,48 @@ router.post('/posts/:postId/comment', verifyJWT, function (req, res, next) {
 	});
 });
 
+// Update Comments
+router.post('/posts/:postId/comment/update', verifyJWT, function (req, res, next) {
+	Post.findById(req.params.postId).exec(function (err, post) {
+		if (err) {
+			return next(err);
+		}
+		var newPost = post;
+		function getComment(comment) {
+			if (
+				comment.author === req.body.comment.author &&
+				comment.content === req.body.comment.content &&
+				comment.timestamp === req.body.comment.timestamp
+			) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+		var index = newPost.comments.findIndex(getComment);
+
+		if (newPost.comments[index].author === req.decoded.username) {
+			newPost.comments.splice(index, 1);
+			var updatedComment = {
+				author: req.decoded.username,
+				content: req.body.content,
+				timestamp: req.body.timestamp,
+				updated: true,
+			};
+			newPost.comments.push(updatedComment);
+			Post.findByIdAndUpdate(req.params.postId, newPost, {}, function (err) {
+				if (err) {
+					return next(err);
+				} else {
+					res.json({ success: true });
+				}
+			});
+		} else {
+			res.json({ error: "Cannot update other people's comments" });
+		}
+	});
+});
+
 // Delete Comments
 router.post('/posts/:postId/comment/delete', verifyJWT, function (req, res, next) {
 	Post.findById(req.params.postId).exec(function (err, post) {
@@ -156,10 +225,6 @@ router.post('/posts/:postId/comment/delete', verifyJWT, function (req, res, next
 			res.json({ error: "Cannot delete other people's comments" });
 		}
 	});
-});
-
-router.post('/aaa', verifyJWT, function (req, res, next) {
-	res.json({ a: 'A' });
 });
 
 // Get Specific Post Info
