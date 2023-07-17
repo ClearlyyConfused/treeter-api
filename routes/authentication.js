@@ -6,19 +6,26 @@ var bcrypt = require('bcrypt');
 var jwt = require('jsonwebtoken');
 
 router.post('/register', function (req, res, next) {
-	bcrypt.hash(req.body.password, 10, function (err, hashedPassword) {
-		if (err) {
-			return next(err);
+	User.findOne({ username: req.body.username }).exec(function (err, userInfo) {
+		if (userInfo === null) {
+			bcrypt.hash(req.body.password, 10, function (err, hashedPassword) {
+				if (err) {
+					return next(err);
+				}
+				var newUser = new User({
+					username: req.body.username,
+					password: hashedPassword,
+				});
+				newUser.save(function (err) {
+					res.json({ success: 'Account created' });
+					if (err) {
+						return next(err);
+					}
+				});
+			});
+		} else {
+			res.json({ error: 'Username already exists' });
 		}
-		var newUser = new User({
-			username: req.body.username,
-			password: hashedPassword,
-		});
-		newUser.save(function (err) {
-			if (err) {
-				return next(err);
-			}
-		});
 	});
 });
 
@@ -35,10 +42,7 @@ router.post('/login', function (req, res, next) {
 					return next(err);
 				}
 				if (result) {
-					var token = jwt.sign(
-						{ userId: userInfo._id, username: userInfo.username },
-						process.env.JWTSECRET
-					);
+					var token = jwt.sign({ userId: userInfo._id, username: userInfo.username }, process.env.JWTSECRET);
 					res.json({ token, username: userInfo.username });
 				} else {
 					res.json({ error: 'Incorrect password' });
