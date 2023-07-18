@@ -31,6 +31,7 @@ router.get('/posts', verifyJWT, function (req, res, next) {
 	});
 });
 
+// create post
 router.post('/posts', verifyJWT, function (req, res, next) {
 	User.findById(req.decoded.userId).exec(function (err, user) {
 		if (err) {
@@ -41,9 +42,33 @@ router.post('/posts', verifyJWT, function (req, res, next) {
 			content: req.body.content,
 			timestamp: req.body.timestamp,
 			comments: [],
+			views: 0,
 			likes: [],
 		});
 		newPost.save(function (err) {
+			if (err) {
+				return next(err);
+			} else {
+				res.json({ success: true });
+			}
+		});
+	});
+});
+
+// view post
+router.post('/posts/:postId/view', verifyJWT, function (req, res, next) {
+	Post.findById(req.params.postId).exec(function (err, post) {
+		var updatedPost = new Post({
+			_id: post._id,
+			author: post.author,
+			content: req.body.content,
+			timestamp: req.body.timestamp,
+			comments: post.comments,
+			likes: post.likes,
+			views: post.views + 1,
+			updated: post.updated,
+		});
+		Post.findByIdAndUpdate(req.params.postId, updatedPost, {}, function (err) {
 			if (err) {
 				return next(err);
 			} else {
@@ -64,6 +89,7 @@ router.post('/posts/:postId/update', verifyJWT, function (req, res, next) {
 				timestamp: req.body.timestamp,
 				comments: post.comments,
 				likes: post.likes,
+				views: post.views,
 				updated: true,
 			});
 			Post.findByIdAndUpdate(req.params.postId, updatedPost, {}, function (err) {

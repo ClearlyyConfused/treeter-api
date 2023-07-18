@@ -7,6 +7,7 @@ var PostSchema = new Schema({
 	timestamp: { type: String, required: true },
 	comments: { type: Array, required: true },
 	likes: { type: Array, required: true },
+	views: { type: Number, required: true },
 	updated: { type: Boolean },
 });
 
