@@ -4,6 +4,13 @@ var router = express.Router();
 var User = require('../models/users');
 var Post = require('../models/posts');
 var jwt = require('jsonwebtoken');
+var cloudinary = require('cloudinary').v2;
+
+cloudinary.config({
+	cloud_name: 'dotw5mwkx',
+	api_key: '834972685861843',
+	api_secret: process.env.CLOUDINARY,
+});
 
 var verifyJWT = function (req, res, next) {
 	var token = req.headers['token'];
@@ -21,7 +28,41 @@ var verifyJWT = function (req, res, next) {
 	}
 };
 
-// Get/Post posts
+// upload PFP
+router.post('/updateProfilePicture', verifyJWT, function (req, res, next) {
+	async function uploadImage() {
+		return await cloudinary.uploader.upload(req.body.image);
+	}
+
+	User.findById(req.decoded.userId).exec(function (err, user) {
+		uploadImage()
+			.then((image) => {
+				if (err) {
+					return next(err);
+				}
+
+				var updatedUser = new User({
+					_id: user._id,
+					username: user.username,
+					password: user.password,
+					profilePicture: image.secure_url,
+				});
+
+				User.findByIdAndUpdate(req.decoded.userId, updatedUser, {}, function (err) {
+					if (err) {
+						return next(err);
+					} else {
+						res.json({ success: true });
+					}
+				});
+			})
+			.catch((err) => {
+				console.log(err);
+			});
+	});
+});
+
+// Get posts
 router.get('/posts', verifyJWT, function (req, res, next) {
 	Post.find().exec(function (err, posts) {
 		if (err) {
