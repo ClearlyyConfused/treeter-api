@@ -62,6 +62,13 @@ router.post('/updateProfilePicture', verifyJWT, function (req, res, next) {
 	});
 });
 
+// get user's PFP
+router.post('/getProfilePicture', verifyJWT, function (req, res, next) {
+	User.findById(req.body.userID).exec(function (err, user) {
+		res.json({ profilePicture: user.profilePicture });
+	});
+});
+
 // Get posts
 router.get('/posts', verifyJWT, function (req, res, next) {
 	Post.find().exec(function (err, posts) {
