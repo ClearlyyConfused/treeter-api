@@ -229,25 +229,54 @@ router.post('/posts/:postId/like', verifyJWT, function (req, res, next) {
 
 // Post Comments
 router.post('/posts/:postId/comment', verifyJWT, function (req, res, next) {
-	Post.findById(req.params.postId).exec(function (err, post) {
-		if (err) {
-			return next(err);
-		}
-		var newPost = post;
-		var newComment = {
-			author: req.decoded.username,
-			content: req.body.content,
-			timestamp: req.body.timestamp,
-		};
-		newPost.comments.push(newComment);
-		Post.findByIdAndUpdate(req.params.postId, newPost, {}, function (err) {
+	async function uploadImage() {
+		return await cloudinary.uploader.upload(req.body.image);
+	}
+
+	if (req.body.image) {
+		uploadImage().then((image) => {
+			Post.findById(req.params.postId).exec(function (err, post) {
+				if (err) {
+					return next(err);
+				}
+				var newPost = post;
+				var newComment = {
+					author: req.decoded.username,
+					content: req.body.content,
+					timestamp: req.body.timestamp,
+					image: image.secure_url,
+				};
+				newPost.comments.push(newComment);
+				Post.findByIdAndUpdate(req.params.postId, newPost, {}, function (err) {
+					if (err) {
+						return next(err);
+					} else {
+						res.json({ success: true });
+					}
+				});
+			});
+		});
+	} else {
+		Post.findById(req.params.postId).exec(function (err, post) {
 			if (err) {
 				return next(err);
-			} else {
-				res.json({ success: true });
 			}
+			var newPost = post;
+			var newComment = {
+				author: req.decoded.username,
+				content: req.body.content,
+				timestamp: req.body.timestamp,
+			};
+			newPost.comments.push(newComment);
+			Post.findByIdAndUpdate(req.params.postId, newPost, {}, function (err) {
+				if (err) {
+					return next(err);
+				} else {
+					res.json({ success: true });
+				}
+			});
 		});
-	});
+	}
 });
 
 // Update Comments
