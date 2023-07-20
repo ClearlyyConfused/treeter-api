@@ -9,6 +9,7 @@ var PostSchema = new Schema({
 	likes: { type: Array, required: true },
 	views: { type: Number, required: true },
 	updated: { type: Boolean },
+	image: { type: String },
 });
 
 module.exports = mongoose.model('posts', PostSchema);

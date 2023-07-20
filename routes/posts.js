@@ -81,25 +81,51 @@ router.get('/posts', verifyJWT, function (req, res, next) {
 
 // create post
 router.post('/posts', verifyJWT, function (req, res, next) {
+	async function uploadImage() {
+		return await cloudinary.uploader.upload(req.body.image);
+	}
+
 	User.findById(req.decoded.userId).exec(function (err, user) {
 		if (err) {
 			return next(err);
 		}
-		var newPost = new Post({
-			author: user.username,
-			content: req.body.content,
-			timestamp: req.body.timestamp,
-			comments: [],
-			views: 0,
-			likes: [],
-		});
-		newPost.save(function (err) {
-			if (err) {
-				return next(err);
-			} else {
-				res.json({ success: true });
-			}
-		});
+		if (req.body.image) {
+			uploadImage().then((image) => {
+				var newPost = new Post({
+					author: user.username,
+					content: req.body.content,
+					timestamp: req.body.timestamp,
+					comments: [],
+					views: 0,
+					likes: [],
+					image: image.secure_url,
+				});
+				newPost.save(function (err) {
+					if (err) {
+						return next(err);
+					} else {
+						res.json({ success: true });
+					}
+				});
+			});
+		} else {
+			var newPost = new Post({
+				author: user.username,
+				content: req.body.content,
+				timestamp: req.body.timestamp,
+				comments: [],
+				views: 0,
+				likes: [],
+				image: undefined,
+			});
+			newPost.save(function (err) {
+				if (err) {
+					return next(err);
+				} else {
+					res.json({ success: true });
+				}
+			});
+		}
 	});
 });
 
