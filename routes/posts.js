@@ -474,4 +474,14 @@ router.get('/posts/:postId', verifyJWT, function (req, res, next) {
 	});
 });
 
+// Get Specific Comment Info
+router.get('/comments/:commentId', verifyJWT, function (req, res, next) {
+	Comment.findById(req.params.commentId).exec(function (err, comment) {
+		if (err) {
+			return next(err);
+		}
+		res.json(comment);
+	});
+});
+
 module.exports = router;
