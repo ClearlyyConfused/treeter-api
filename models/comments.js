@@ -1,7 +1,7 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
-var PostSchema = new Schema({
+var CommentSchema = new Schema({
 	author: { type: String, required: true },
 	content: { type: String, required: true },
 	timestamp: { type: String, required: true },
@@ -9,7 +9,8 @@ var PostSchema = new Schema({
 	views: { type: Number, required: true },
 	updated: { type: Boolean },
 	image: { type: String },
+	replyChain: [{ type: Schema.Types.ObjectId }],
 	comments: [{ type: Schema.Types.ObjectId, ref: 'Comments' }],
 });
 
-module.exports = mongoose.model('posts', PostSchema);
+module.exports = mongoose.model('Comments', CommentSchema);

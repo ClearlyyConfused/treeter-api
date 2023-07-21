@@ -3,6 +3,7 @@ var express = require('express');
 var router = express.Router();
 var User = require('../models/users');
 var Post = require('../models/posts');
+var Comment = require('../models/comments');
 var jwt = require('jsonwebtoken');
 var cloudinary = require('cloudinary').v2;
 
@@ -239,19 +240,33 @@ router.post('/posts/:postId/comment', verifyJWT, function (req, res, next) {
 				if (err) {
 					return next(err);
 				}
+
 				var newPost = post;
-				var newComment = {
+
+				var newComment = new Comment({
 					author: req.decoded.username,
 					content: req.body.content,
 					timestamp: req.body.timestamp,
 					image: image.secure_url,
-				};
-				newPost.comments.push(newComment);
+					likes: [],
+					views: 0,
+					updated: false,
+					replyChain: [newPost._id],
+					comments: [],
+				});
+
+				newPost.comments.push(newComment._id);
 				Post.findByIdAndUpdate(req.params.postId, newPost, {}, function (err) {
 					if (err) {
 						return next(err);
 					} else {
-						res.json({ success: true });
+						newComment.save(function (err) {
+							if (err) {
+								return next(err);
+							} else {
+								res.json({ success: true });
+							}
+						});
 					}
 				});
 			});
@@ -262,17 +277,32 @@ router.post('/posts/:postId/comment', verifyJWT, function (req, res, next) {
 				return next(err);
 			}
 			var newPost = post;
-			var newComment = {
+
+			var newComment = new Comment({
 				author: req.decoded.username,
 				content: req.body.content,
 				timestamp: req.body.timestamp,
-			};
-			newPost.comments.push(newComment);
+				likes: [],
+				views: 0,
+				updated: false,
+				replyChain: [newPost._id],
+				comments: [],
+			});
+
+			newPost.comments.push(newComment._id);
+			console.log(newComment._id);
+			console.log(newPost.comments);
 			Post.findByIdAndUpdate(req.params.postId, newPost, {}, function (err) {
 				if (err) {
 					return next(err);
 				} else {
-					res.json({ success: true });
+					newComment.save(function (err) {
+						if (err) {
+							return next(err);
+						} else {
+							res.json({ success: true });
+						}
+					});
 				}
 			});
 		});
