@@ -5,6 +5,7 @@ var User = require('../models/users');
 var Post = require('../models/posts');
 var Comment = require('../models/comments');
 var jwt = require('jsonwebtoken');
+var mongoose = require('mongoose');
 var cloudinary = require('cloudinary').v2;
 
 cloudinary.config({
@@ -228,7 +229,7 @@ router.post('/posts/:postId/like', verifyJWT, function (req, res, next) {
 	});
 });
 
-// Post Comments
+// Comment on post
 router.post('/posts/:postId/comment', verifyJWT, function (req, res, next) {
 	async function uploadImage() {
 		return await cloudinary.uploader.upload(req.body.image);
@@ -290,9 +291,86 @@ router.post('/posts/:postId/comment', verifyJWT, function (req, res, next) {
 			});
 
 			newPost.comments.push(newComment._id);
-			console.log(newComment._id);
-			console.log(newPost.comments);
 			Post.findByIdAndUpdate(req.params.postId, newPost, {}, function (err) {
+				if (err) {
+					return next(err);
+				} else {
+					newComment.save(function (err) {
+						if (err) {
+							return next(err);
+						} else {
+							res.json({ success: true });
+						}
+					});
+				}
+			});
+		});
+	}
+});
+
+router.post('/comments/:commentId/comment', verifyJWT, function (req, res, next) {
+	async function uploadImage() {
+		return await cloudinary.uploader.upload(req.body.image);
+	}
+
+	if (req.body.image) {
+		uploadImage().then((image) => {
+			Comment.findById(req.params.commentId).exec(function (err, comment) {
+				if (err) {
+					return next(err);
+				}
+
+				var updatedComment = comment;
+
+				var newComment = new Comment({
+					author: req.decoded.username,
+					content: req.body.content,
+					timestamp: req.body.timestamp,
+					image: image.secure_url,
+					likes: [],
+					views: 0,
+					updated: false,
+					replyChain: [...comment.replyChain, comment._id],
+					comments: [],
+				});
+
+				updatedComment.comments.push(newComment._id);
+				Comment.findByIdAndUpdate(req.params.commentId, updatedComment, {}, function (err) {
+					if (err) {
+						return next(err);
+					} else {
+						newComment.save(function (err) {
+							if (err) {
+								return next(err);
+							} else {
+								res.json({ success: true });
+							}
+						});
+					}
+				});
+			});
+		});
+	} else {
+		Comment.findById(req.params.commentId).exec(function (err, comment) {
+			if (err) {
+				return next(err);
+			}
+
+			var updatedComment = comment;
+
+			var newComment = new Comment({
+				author: req.decoded.username,
+				content: req.body.content,
+				timestamp: req.body.timestamp,
+				likes: [],
+				views: 0,
+				updated: false,
+				replyChain: [...comment.replyChain, comment._id],
+				comments: [],
+			});
+
+			updatedComment.comments.push(newComment._id);
+			Comment.findByIdAndUpdate(req.params.commentId, updatedComment, {}, function (err) {
 				if (err) {
 					return next(err);
 				} else {
