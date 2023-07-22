@@ -232,23 +232,23 @@ router.post('/posts/:postId/like', verifyJWT, function (req, res, next) {
 // Comment on post
 router.post('/posts/:postId/comment', verifyJWT, function (req, res, next) {
 	async function uploadImage() {
-		return await cloudinary.uploader.upload(req.body.image);
+		if (req.body.image) {
+			return await cloudinary.uploader.upload(req.body.image);
+		} else {
+			return undefined;
+		}
 	}
 
-	if (req.body.image) {
-		uploadImage().then((image) => {
-			Post.findById(req.params.postId).exec(function (err, post) {
-				if (err) {
-					return next(err);
-				}
-
+	Post.findById(req.params.postId).exec(function (err, post) {
+		if (post !== null) {
+			uploadImage().then((image) => {
 				var newPost = post;
 
 				var newComment = new Comment({
 					author: req.decoded.username,
 					content: req.body.content,
 					timestamp: req.body.timestamp,
-					image: image.secure_url,
+					image: image ? image.secure_url : undefined,
 					likes: [],
 					views: 0,
 					updated: false,
@@ -271,43 +271,48 @@ router.post('/posts/:postId/comment', verifyJWT, function (req, res, next) {
 					}
 				});
 			});
-		});
-	} else {
-		Post.findById(req.params.postId).exec(function (err, post) {
-			if (err) {
-				return next(err);
-			}
-			var newPost = post;
+		} else {
+			uploadImage().then((image) => {
+				Comment.findById(req.params.postId).exec(function (err, comment) {
+					if (err) {
+						return next(err);
+					}
 
-			var newComment = new Comment({
-				author: req.decoded.username,
-				content: req.body.content,
-				timestamp: req.body.timestamp,
-				likes: [],
-				views: 0,
-				updated: false,
-				replyChain: [newPost._id],
-				comments: [],
-			});
+					var updatedComment = comment;
 
-			newPost.comments.push(newComment._id);
-			Post.findByIdAndUpdate(req.params.postId, newPost, {}, function (err) {
-				if (err) {
-					return next(err);
-				} else {
-					newComment.save(function (err) {
+					var newComment = new Comment({
+						author: req.decoded.username,
+						content: req.body.content,
+						timestamp: req.body.timestamp,
+						image: image ? image.secure_url : undefined,
+						likes: [],
+						views: 0,
+						updated: false,
+						replyChain: [...comment.replyChain, comment._id],
+						comments: [],
+					});
+
+					updatedComment.comments.push(newComment._id);
+					Comment.findByIdAndUpdate(req.params.postId, updatedComment, {}, function (err) {
 						if (err) {
 							return next(err);
 						} else {
-							res.json({ success: true });
+							newComment.save(function (err) {
+								if (err) {
+									return next(err);
+								} else {
+									res.json({ success: true });
+								}
+							});
 						}
 					});
-				}
+				});
 			});
-		});
-	}
+		}
+	});
 });
 
+/*
 // comment on comment
 router.post('/comments/:commentId/comment', verifyJWT, function (req, res, next) {
 	async function uploadImage() {
@@ -387,6 +392,7 @@ router.post('/comments/:commentId/comment', verifyJWT, function (req, res, next)
 		});
 	}
 });
+*/
 
 // Update Comments
 router.post('/posts/:postId/comment/update', verifyJWT, function (req, res, next) {
