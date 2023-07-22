@@ -134,23 +134,48 @@ router.post('/posts', verifyJWT, function (req, res, next) {
 // view post
 router.post('/posts/:postId/view', verifyJWT, function (req, res, next) {
 	Post.findById(req.params.postId).exec(function (err, post) {
-		var updatedPost = new Post({
-			_id: post._id,
-			author: post.author,
-			content: req.body.content,
-			timestamp: req.body.timestamp,
-			comments: post.comments,
-			likes: post.likes,
-			views: post.views + 1,
-			updated: post.updated,
-		});
-		Post.findByIdAndUpdate(req.params.postId, updatedPost, {}, function (err) {
-			if (err) {
-				return next(err);
-			} else {
-				res.json({ success: true });
-			}
-		});
+		if (post !== null) {
+			var updatedPost = new Post({
+				_id: post._id,
+				author: post.author,
+				content: post.content,
+				timestamp: post.timestamp,
+				comments: post.comments,
+				likes: post.likes,
+				image: post.image,
+				views: post.views + 1,
+				updated: post.updated,
+			});
+			Post.findByIdAndUpdate(req.params.postId, updatedPost, {}, function (err) {
+				if (err) {
+					return next(err);
+				} else {
+					res.json({ success: true });
+				}
+			});
+		} else {
+			Comment.findById(req.params.postId).exec(function (err, comment) {
+				var updatedComment = new Comment({
+					_id: comment._id,
+					author: comment.author,
+					content: comment.content,
+					timestamp: comment.timestamp,
+					replyChain: comment.replyChain,
+					comments: comment.comments,
+					likes: comment.likes,
+					image: comment.image,
+					views: comment.views + 1,
+					updated: comment.updated,
+				});
+				Comment.findByIdAndUpdate(req.params.postId, updatedComment, {}, function (err) {
+					if (err) {
+						return next(err);
+					} else {
+						res.json({ success: true });
+					}
+				});
+			});
+		}
 	});
 });
 
@@ -204,25 +229,55 @@ router.post('/posts/:postId/like', verifyJWT, function (req, res, next) {
 		if (err) {
 			return next(err);
 		}
-		if (post.likes.includes(req.decoded.username)) {
-			var index = post.likes.indexOf(req.decoded.username);
-			var updatedPost = post;
-			updatedPost.likes.splice(index, 1);
-			Post.findByIdAndUpdate(req.params.postId, updatedPost, {}, function (err) {
-				if (err) {
-					return next(err);
-				} else {
-					res.json({ success: true });
-				}
-			});
+		if (post !== null) {
+			if (post.likes.includes(req.decoded.username)) {
+				var index = post.likes.indexOf(req.decoded.username);
+				var updatedPost = post;
+				updatedPost.likes.splice(index, 1);
+				Post.findByIdAndUpdate(req.params.postId, updatedPost, {}, function (err) {
+					if (err) {
+						return next(err);
+					} else {
+						res.json({ success: true });
+					}
+				});
+			} else {
+				var updatedPost = post;
+				updatedPost.likes.push(req.decoded.username);
+				Post.findByIdAndUpdate(req.params.postId, updatedPost, {}, function (err) {
+					if (err) {
+						return next(err);
+					} else {
+						res.json({ success: true });
+					}
+				});
+			}
 		} else {
-			var updatedPost = post;
-			updatedPost.likes.push(req.decoded.username);
-			Post.findByIdAndUpdate(req.params.postId, updatedPost, {}, function (err) {
+			Comment.findById(req.params.postId).exec(function (err, comment) {
 				if (err) {
 					return next(err);
+				}
+				if (comment.likes.includes(req.decoded.username)) {
+					var index = comment.likes.indexOf(req.decoded.username);
+					var updatedComment = comment;
+					updatedComment.likes.splice(index, 1);
+					Comment.findByIdAndUpdate(req.params.postId, updatedComment, {}, function (err) {
+						if (err) {
+							return next(err);
+						} else {
+							res.json({ success: true });
+						}
+					});
 				} else {
-					res.json({ success: true });
+					var updatedComment = comment;
+					updatedComment.likes.push(req.decoded.username);
+					Comment.findByIdAndUpdate(req.params.postId, updatedComment, {}, function (err) {
+						if (err) {
+							return next(err);
+						} else {
+							res.json({ success: true });
+						}
+					});
 				}
 			});
 		}
@@ -311,88 +366,6 @@ router.post('/posts/:postId/comment', verifyJWT, function (req, res, next) {
 		}
 	});
 });
-
-/*
-// comment on comment
-router.post('/comments/:commentId/comment', verifyJWT, function (req, res, next) {
-	async function uploadImage() {
-		return await cloudinary.uploader.upload(req.body.image);
-	}
-
-	if (req.body.image) {
-		uploadImage().then((image) => {
-			Comment.findById(req.params.commentId).exec(function (err, comment) {
-				if (err) {
-					return next(err);
-				}
-
-				var updatedComment = comment;
-
-				var newComment = new Comment({
-					author: req.decoded.username,
-					content: req.body.content,
-					timestamp: req.body.timestamp,
-					image: image.secure_url,
-					likes: [],
-					views: 0,
-					updated: false,
-					replyChain: [...comment.replyChain, comment._id],
-					comments: [],
-				});
-
-				updatedComment.comments.push(newComment._id);
-				Comment.findByIdAndUpdate(req.params.commentId, updatedComment, {}, function (err) {
-					if (err) {
-						return next(err);
-					} else {
-						newComment.save(function (err) {
-							if (err) {
-								return next(err);
-							} else {
-								res.json({ success: true });
-							}
-						});
-					}
-				});
-			});
-		});
-	} else {
-		Comment.findById(req.params.commentId).exec(function (err, comment) {
-			if (err) {
-				return next(err);
-			}
-
-			var updatedComment = comment;
-
-			var newComment = new Comment({
-				author: req.decoded.username,
-				content: req.body.content,
-				timestamp: req.body.timestamp,
-				likes: [],
-				views: 0,
-				updated: false,
-				replyChain: [...comment.replyChain, comment._id],
-				comments: [],
-			});
-
-			updatedComment.comments.push(newComment._id);
-			Comment.findByIdAndUpdate(req.params.commentId, updatedComment, {}, function (err) {
-				if (err) {
-					return next(err);
-				} else {
-					newComment.save(function (err) {
-						if (err) {
-							return next(err);
-						} else {
-							res.json({ success: true });
-						}
-					});
-				}
-			});
-		});
-	}
-});
-*/
 
 // Update Comments
 router.post('/posts/:postId/comment/update', verifyJWT, function (req, res, next) {
@@ -490,17 +463,5 @@ router.get('/posts/:postId', verifyJWT, function (req, res, next) {
 		}
 	});
 });
-
-/*
-// Get Specific Comment Info
-router.get('/comments/:commentId', verifyJWT, function (req, res, next) {
-	Comment.findById(req.params.commentId).exec(function (err, comment) {
-		if (err) {
-			return next(err);
-		}
-		res.json(comment);
-	});
-});
-*/
 
 module.exports = router;
