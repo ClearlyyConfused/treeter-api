@@ -464,4 +464,29 @@ router.get('/posts/:postId', verifyJWT, function (req, res, next) {
 	});
 });
 
+// return post info from an array of IDs
+router.post('/posts/array', verifyJWT, async function (req, res, next) {
+	async function fetchData(postId) {
+		let post = await Post.findById(postId);
+		if (post !== null) {
+			return post;
+		} else {
+			post = await Comment.findById(postId);
+			return post;
+		}
+	}
+
+	async function fetchAllComment(postCommentIds) {
+		let array = [];
+		for (const id of postCommentIds) {
+			const data = await fetchData(id);
+			array.push(data);
+		}
+		return array;
+	}
+
+	const array = await fetchAllComment(req.body.array);
+	res.json(array);
+});
+
 module.exports = router;
