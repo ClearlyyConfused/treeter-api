@@ -308,6 +308,7 @@ router.post('/posts/:postId/comment', verifyJWT, function (req, res, next) {
 	}
 });
 
+// comment on comment
 router.post('/comments/:commentId/comment', verifyJWT, function (req, res, next) {
 	async function uploadImage() {
 		return await cloudinary.uploader.upload(req.body.image);
@@ -464,16 +465,27 @@ router.post('/posts/:postId/comment/delete', verifyJWT, function (req, res, next
 	});
 });
 
-// Get Specific Post Info
+// Get post or comment Info
 router.get('/posts/:postId', verifyJWT, function (req, res, next) {
 	Post.findById(req.params.postId).exec(function (err, post) {
 		if (err) {
 			return next(err);
 		}
-		res.json(post);
+
+		if (post !== null) {
+			res.json(post);
+		} else {
+			Comment.findById(req.params.postId).exec(function (err, comment) {
+				if (err) {
+					return next(err);
+				}
+				res.json(comment);
+			});
+		}
 	});
 });
 
+/*
 // Get Specific Comment Info
 router.get('/comments/:commentId', verifyJWT, function (req, res, next) {
 	Comment.findById(req.params.commentId).exec(function (err, comment) {
@@ -483,5 +495,6 @@ router.get('/comments/:commentId', verifyJWT, function (req, res, next) {
 		res.json(comment);
 	});
 });
+*/
 
 module.exports = router;
