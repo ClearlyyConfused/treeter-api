@@ -206,19 +206,35 @@ router.post('/posts/:postId/update', verifyJWT, function (req, res, next) {
 	});
 });
 
-// Delete posts
+// Delete posts/comments
 router.post('/posts/:postId/delete', verifyJWT, function (req, res, next) {
 	Post.findById(req.params.postId).exec(function (err, post) {
-		if (post.author === req.decoded.username) {
-			Post.findByIdAndDelete(req.params.postId, function (err) {
-				if (err) {
-					return next(err);
+		if (post !== null) {
+			if (post.author === req.decoded.username) {
+				Post.findByIdAndDelete(req.params.postId, function (err) {
+					if (err) {
+						return next(err);
+					} else {
+						res.json({ success: true });
+					}
+				});
+			} else {
+				res.json({ error: "Cannot delete other people's posts" });
+			}
+		} else {
+			Comment.findById(req.params.postId).exec(function (err, comment) {
+				if (comment.author === req.decoded.username) {
+					Comment.findByIdAndDelete(req.params.postId, function (err) {
+						if (err) {
+							return next(err);
+						} else {
+							res.json({ success: true });
+						}
+					});
 				} else {
-					res.json({ success: true });
+					res.json({ error: "Cannot delete other people's posts" });
 				}
 			});
-		} else {
-			res.json({ error: "Cannot delete other people's posts" });
 		}
 	});
 });
@@ -405,41 +421,6 @@ router.post('/posts/:postId/comment/update', verifyJWT, function (req, res, next
 			});
 		} else {
 			res.json({ error: "Cannot update other people's comments" });
-		}
-	});
-});
-
-// Delete Comments
-router.post('/posts/:postId/comment/delete', verifyJWT, function (req, res, next) {
-	Post.findById(req.params.postId).exec(function (err, post) {
-		if (err) {
-			return next(err);
-		}
-		var newPost = post;
-		function getComment(comment) {
-			if (
-				comment.author === req.body.comment.author &&
-				comment.content === req.body.comment.content &&
-				comment.timestamp === req.body.comment.timestamp
-			) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-		var index = newPost.comments.findIndex(getComment);
-
-		if (newPost.comments[index].author === req.decoded.username) {
-			newPost.comments.splice(index, 1);
-			Post.findByIdAndUpdate(req.params.postId, newPost, {}, function (err) {
-				if (err) {
-					return next(err);
-				} else {
-					res.json({ success: true });
-				}
-			});
-		} else {
-			res.json({ error: "Cannot delete other people's comments" });
 		}
 	});
 });
