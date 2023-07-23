@@ -155,25 +155,29 @@ router.post('/posts/:postId/view', verifyJWT, function (req, res, next) {
 			});
 		} else {
 			Comment.findById(req.params.postId).exec(function (err, comment) {
-				var updatedComment = new Comment({
-					_id: comment._id,
-					author: comment.author,
-					content: comment.content,
-					timestamp: comment.timestamp,
-					replyChain: comment.replyChain,
-					comments: comment.comments,
-					likes: comment.likes,
-					image: comment.image,
-					views: comment.views + 1,
-					updated: comment.updated,
-				});
-				Comment.findByIdAndUpdate(req.params.postId, updatedComment, {}, function (err) {
-					if (err) {
-						return next(err);
-					} else {
-						res.json({ success: true });
-					}
-				});
+				if (comment !== null) {
+					var updatedComment = new Comment({
+						_id: comment._id,
+						author: comment.author,
+						content: comment.content,
+						timestamp: comment.timestamp,
+						replyChain: comment.replyChain,
+						comments: comment.comments,
+						likes: comment.likes,
+						image: comment.image,
+						views: comment.views + 1,
+						updated: comment.updated,
+					});
+					Comment.findByIdAndUpdate(req.params.postId, updatedComment, {}, function (err) {
+						if (err) {
+							return next(err);
+						} else {
+							res.json({ success: true });
+						}
+					});
+				} else {
+					res.json({ success: false });
+				}
 			});
 		}
 	});
