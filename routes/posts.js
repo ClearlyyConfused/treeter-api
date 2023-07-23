@@ -257,21 +257,23 @@ router.post('/posts/:postId/delete', verifyJWT, function (req, res, next) {
 								err,
 								comment2
 							) {
-								var updatedComment = comment2;
-								var index = updatedComment.comments.indexOf(req.params.postId);
-								updatedComment.comments.splice(index, 1);
-								Comment.findByIdAndUpdate(
-									comment.replyChain[comment.replyChain.length - 1],
-									updatedComment,
-									{},
-									function (err) {
-										if (err) {
-											return next(err);
-										} else {
-											res.json({ success: true });
+								if (comment2 !== null) {
+									var updatedComment = comment2;
+									var index = updatedComment.comments.indexOf(req.params.postId);
+									updatedComment.comments.splice(index, 1);
+									Comment.findByIdAndUpdate(
+										comment.replyChain[comment.replyChain.length - 1],
+										updatedComment,
+										{},
+										function (err) {
+											if (err) {
+												return next(err);
+											} else {
+												res.json({ success: true });
+											}
 										}
-									}
-								);
+									);
+								}
 								Comment.findByIdAndDelete(req.params.postId, function (err) {
 									if (err) {
 										return next(err);
