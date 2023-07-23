@@ -210,6 +210,7 @@ router.post('/posts/:postId/update', verifyJWT, function (req, res, next) {
 router.post('/posts/:postId/delete', verifyJWT, function (req, res, next) {
 	Post.findById(req.params.postId).exec(function (err, post) {
 		if (post !== null) {
+			// deleting a post
 			if (post.author === req.decoded.username) {
 				Post.findByIdAndDelete(req.params.postId, function (err) {
 					if (err) {
@@ -223,12 +224,62 @@ router.post('/posts/:postId/delete', verifyJWT, function (req, res, next) {
 			}
 		} else {
 			Comment.findById(req.params.postId).exec(function (err, comment) {
+				// deleting a comment
 				if (comment.author === req.decoded.username) {
-					Comment.findByIdAndDelete(req.params.postId, function (err) {
-						if (err) {
-							return next(err);
+					// comment is replying to a post
+					Post.findById(comment.replyChain[comment.replyChain.length - 1]).exec(function (err, post) {
+						if (post !== null) {
+							var updatedPost = post;
+							var index = updatedPost.comments.indexOf(req.params.postId);
+							updatedPost.comments.splice(index, 1);
+							Post.findByIdAndUpdate(
+								comment.replyChain[comment.replyChain.length - 1],
+								updatedPost,
+								{},
+								function (err) {
+									if (err) {
+										return next(err);
+									} else {
+										res.json({ success: true });
+									}
+								}
+							);
+							Comment.findByIdAndDelete(req.params.postId, function (err) {
+								if (err) {
+									return next(err);
+								} else {
+									res.json({ success: true });
+								}
+							});
 						} else {
-							res.json({ success: true });
+							// comment is replying to another comment
+							Comment.findById(comment.replyChain[comment.replyChain.length - 1]).exec(function (
+								err,
+								comment2
+							) {
+								var updatedComment = comment2;
+								var index = updatedComment.comments.indexOf(req.params.postId);
+								updatedComment.comments.splice(index, 1);
+								Comment.findByIdAndUpdate(
+									comment.replyChain[comment.replyChain.length - 1],
+									updatedComment,
+									{},
+									function (err) {
+										if (err) {
+											return next(err);
+										} else {
+											res.json({ success: true });
+										}
+									}
+								);
+								Comment.findByIdAndDelete(req.params.postId, function (err) {
+									if (err) {
+										return next(err);
+									} else {
+										res.json({ success: true });
+									}
+								});
+							});
 						}
 					});
 				} else {
