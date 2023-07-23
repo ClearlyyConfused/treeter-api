@@ -244,7 +244,6 @@ router.post('/posts/:postId/delete', verifyJWT, function (req, res, next) {
 									if (err) {
 										return next(err);
 									} else {
-										res.json({ success: true });
 									}
 								}
 							);
@@ -273,7 +272,6 @@ router.post('/posts/:postId/delete', verifyJWT, function (req, res, next) {
 											if (err) {
 												return next(err);
 											} else {
-												res.json({ success: true });
 											}
 										}
 									);
