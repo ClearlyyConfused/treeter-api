@@ -74,7 +74,7 @@ https://treeter-api.vercel.app/
 | Parameter   | Type     | Description                                                                               |
 | :---------- | :------- | :---------------------------------------------------------------------------------------- |
 | `content`   | `string` | Text message in new post                                                                  |
-| `image`     | `string` | Image in new post                                                                         |
+| `image`     | `string` | Base64 string of image in new post                                                        |
 | `timestamp` | `string` | **Required**. Time at which post is created                                               |
 | `token`     | `string` | **Required**. JWT token in the header used to identify which user account post belongs to |
 
@@ -121,7 +121,7 @@ https://treeter-api.vercel.app/
 | :---------- | :------- | :------------------------------------------------------------------------------------------- |
 | `:postId`   | `string` | **Required**. ID of the post/comment to add a comment to                                     |
 | `content`   | `string` | Text message in new post                                                                     |
-| `image`     | `string` | Image in new post                                                                            |
+| `image`     | `string` | Base64 string of image in new post                                                           |
 | `timestamp` | `string` | **Required**. Time at which post is created                                                  |
 | `token`     | `string` | **Required**. JWT token in the header used to identify which user account comment belongs to |
 
